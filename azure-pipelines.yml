@@ -19,6 +19,11 @@ stages:
       displayName: 'Use Python $(pythonVersion)'
 
     - script: |
+        python -m pip install --upgrade pip
+        pip install pytest
+      displayName: 'Install pytest'
+
+    - script: |
         python -m pytest test_sales.py -v --junitxml=junit/test-results.xml
       displayName: 'Run unit tests'
       continueOnError: false
