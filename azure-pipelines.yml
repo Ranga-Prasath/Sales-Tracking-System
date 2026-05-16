@@ -1,0 +1,53 @@
+trigger:
+  - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  pythonVersion: '3.11'
+
+stages:
+- stage: Build
+  jobs:
+  - job: BuildAndTest
+    displayName: 'Build and Test Python Application'
+    steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '$(pythonVersion)'
+      displayName: 'Use Python $(pythonVersion)'
+
+    - script: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+      displayName: 'Install dependencies'
+      condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
+
+    - script: |
+        python -m pytest test_sales.py -v --junitxml=junit/test-results.xml
+      displayName: 'Run unit tests'
+      continueOnError: false
+
+    - task: PublishTestResults@2
+      condition: succeededOrFailed()
+      inputs:
+        testResultsFiles: '**/test-results.xml'
+        testRunTitle: 'Python Tests'
+        publishRunAttachments: true
+
+    - script: |
+        python -m pylint --disable=all --enable=E,F sales.py || true
+      displayName: 'Run code analysis'
+      continueOnError: true
+
+- stage: Deploy
+  displayName: 'Deploy'
+  dependsOn: Build
+  condition: succeeded()
+  jobs:
+  - job: DeployJob
+    displayName: 'Deploy Application'
+    steps:
+    - script: echo 'Deploying Sales Tracking System...'
+      displayName: 'Deploy placeholder'
